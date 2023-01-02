@@ -18,7 +18,8 @@ mod_teamgen_ui <- function(id) {
           "Player Template"
         ),
         fileInput(
-          inputId = NS(id, "avit"), label = "Upload Player Data"
+          inputId = NS(id, "upload"), label = "Upload Player Data",
+          accept = ".csv"
         ),
         br(),
         sliderInput(
@@ -28,7 +29,6 @@ mod_teamgen_ui <- function(id) {
           max = 15,
           value = 7
         ),
-        actionButton(NS(id, "do"), "Generate Teams"),
         tags$a(
           id = NS(id, "downloadgit"),
           class = paste("btn btn-default shiny-download-link", "btn-primary"),
@@ -66,36 +66,34 @@ mod_teamgen_server <- function(id) {
       filename = function() {"GeneratedTeams.csv"},
       content = function(file) {
         write.table(
-          x = indf, file = file, quote = TRUE, sep = ",",
+          x = gtdf(), file = file, quote = TRUE, sep = ",",
           row.names = FALSE, col.names = TRUE)
          }
        )
 
-    observeEvent(input$do, {
-      session$sendCustomMessage(type = 'testmessage',
-                                message = 'Teams Generated')
-    })
-
     indf <- reactive({
-      file <- input$avit
-      ext <- tools::file_ext(file$datapath)
+      file <- input$upload
       req(file)
+      ext <- tools::file_ext(file$datapath)
       validate(need(ext == "csv", "Please upload a csv file"))
-      indf <- read.csv(file$datapath, header = input$header)
+      indf <- read.csv(file$datapath)
     })
 
     team_id <- group_id <- group_score <- NULL
 
+    nt <- reactive({input$num_teams})
+
     gtdf <-
       reactive({
-        balancedteams::GenerateBalancedTeams(indf$group_id,
-                                             indf$group_score,
-                                             num_teams = 7) %>%
+        req(input$upload)
+        balancedteams::GenerateBalancedTeams(indf()$group_id,
+                                             indf()$group_score,
+                                             num_teams = nt()) %>%
         dplyr::arrange(team_id, group_id, group_score)
       })
 
     st <- reactive({
-      indf %>%
+      gtdf() %>%
       dplyr::group_by(team_id) %>%
       dplyr::summarize(`Mean Score` = mean(group_score),
                        `# Players` = dplyr::n()) %>%
@@ -103,8 +101,8 @@ mod_teamgen_server <- function(id) {
       dplyr::rename(`Team` = team_id)
     })
 
-    output$summary_table <- renderTable(st)
+    output$summary_table <- renderTable({st()})
 
-    output$generated_table <- renderDataTable(gtdf)
+    output$generated_table <- renderDataTable({gtdf()})
   })
 }
