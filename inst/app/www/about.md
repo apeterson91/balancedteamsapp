@@ -1,5 +1,7 @@
 # Generating Balanced Teams
 
+<img src="balanceteams_hex.png" align="right" width=250 height=200 /> 
+
 
 ## Background
 
