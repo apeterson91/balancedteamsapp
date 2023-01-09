@@ -13,28 +13,45 @@ all those awesome people on teams but how to best do it?
 ## Methodology 
 
 The [`balancedteams` R package](https://github.com/apeterson91/balancedteams) 
-(currently) uses a greedy algorithm that takes a player or group 
---- for players that baggage together --- score and assigns the "best" group to 
-the worst performing team, starting with some random initialization of the 
-teams. There are a number of ways to come up with this score but common
-methods used by our collaborators include an average of a self-survey and/or
-a captain's assessment of a player's athleticism. There are several things worth
-noting here:
+offers a suite of --- currently two --- methods including a greedy heuristic 
+algorithm, as well as a formal  mixed integer linear programming (MILP) 
+algorithm that each takes a player or group 
+--- for players that baggage together --- score and assigns them to a team, 
+so that teams are balanced. There are a number of ways to come up with this
+score but common methods used by our collaborators include an average of a self-survey and/or 
+a captain's assessment of a player's athleticism. 
+There are several things worth noting here:
 
-1. As far as I know there is no closed form solution to finding the "best"
-partition of players into teams. This is what's known as a Non-Polynomial 
-combinatorial optimization problem. Specifically, it is a variant of the 
+1. Currently only the greedy algorithm is available in the app. This is because
+the MILP algorithm is memory intensive and the app is currently running on a 
+"free" shinyapps server account.
+
+2. As far as I know there is no closed form solution to finding the "best"
+partition of players into teams when formulated in this way. This is what's 
+known as a Non-Polynomial combinatorial optimization problem. Specifically, it 
+is a variant of the 
 [Bin-Packing](https://en.wikipedia.org/wiki/Bin_packing_problem) problem.
 
-  * That means that the parameter space is huge --- there are [N choose K](https://en.wikipedia.org/wiki/Binomial_coefficient) 
+  * That means that the parameter space is huge --- 
+  there are [N choose K](https://en.wikipedia.org/wiki/Binomial_coefficient) 
   possibilities for N players and K teams. Thus, we would run out of 
   memory/time if we tried to enumerate all possible team combinations for a 
   typical number of players and teams.
-
-  * You can see a different methodology for solving this problem in 
-  1-4 dimensional space [here](https://github.com/gyang274/gbp).
   
-2. This work builds off of and is heavily inspired by the 
+  * Instead we use one of two algorithms:
+    1. The greedy algorithm, takes a random initialization of teams 
+    and then iteratively works through each player or group of players (baggage)
+    and assigns the "best" group to the "worst" team as measured by their score
+    until their are no remaining players/groups to assign.
+    2. The MILP algorithm from the 
+  [ompr](https://dirkschumacher.github.io/ompr/) R package (Schumacher D (2022))
+  that (typically) uses a dual simplex algorithm 
+  ([1](https://en.wikipedia.org/wiki/Simplex_algorithm),
+   [2](https://www.matem.unam.mx/~omar/math340/dual-simplex.html#fn.1)) to 
+   explore the parameter space and find the optimal solution satisfying
+   all the constraints (e.g. all players must be assigned to a team).
+
+3. This work is inspired by the 
 [Ann Arbor Ultimate](https://www.annarborultimate.org/)
 league's [algorithm](https://github.com/a2ultimate/ultimate-league-app/blob/23af8dc1c3fdd985fab82530c1b7880c9ce7bb5c/src/ultimate/junta/views.py#L419) for assigning teams.
 
@@ -66,3 +83,13 @@ created by the algorithm.
 
 * Finally, the Generated Teams button can be used to download a csv of the
 team assignments dataset.
+
+
+## Acknowledgments
+
+My thanks to Mark Russell for pointing me towards MILP methods for this problem.
+
+
+## References
+
+Schumacher D (2022). ompr: Model and Solve Mixed Integer Linear Programs. R package version 1.0.3.9000, https://github.com/dirkschumacher/ompr.

@@ -79,7 +79,7 @@ mod_teamgen_server <- function(id) {
       indf <- read.csv(file$datapath)
     })
 
-    team_id <- group_id <- group_score <- NULL
+    team_id <- group_id <- score <- group_score <- NULL
 
     nt <- reactive({input$num_teams})
 
@@ -89,13 +89,13 @@ mod_teamgen_server <- function(id) {
         balancedteams::GenerateBalancedTeams(indf()$group_id,
                                              indf()$group_score,
                                              num_teams = nt()) %>%
-        dplyr::arrange(team_id, group_id, group_score)
+        dplyr::arrange(team_id, group_id, score)
       })
 
     st <- reactive({
       gtdf() %>%
       dplyr::group_by(team_id) %>%
-      dplyr::summarize(`Mean Score` = mean(group_score),
+      dplyr::summarize(`Mean Score` = mean(score),
                        `# Players` = dplyr::n()) %>%
       dplyr::ungroup() %>%
       dplyr::rename(`Team` = team_id)
